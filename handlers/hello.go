@@ -7,10 +7,12 @@ import (
 	"net/http"
 )
 
+// Hello is a simple handler
 type Hello struct {
 	l *log.Logger
 }
 
+// NewHello create a new hello handler with the given logger
 func NewHello(l *log.Logger) *Hello {
 	return &Hello{l}
 }
