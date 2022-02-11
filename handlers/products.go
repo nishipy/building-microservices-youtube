@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"log"
 	"net/http"
-	"regexp"
 	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/nishipy/microservice-go-practice/data"
 )
 
@@ -13,91 +14,44 @@ type Products struct {
 	l *log.Logger
 }
 
+type KeyProduct struct{}
+
 func NewProducts(l *log.Logger) *Products {
 	return &Products{l}
 }
 
-func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	//GET
-	if r.Method == http.MethodGet {
-		p.getProducts(rw, r)
-		return
-	}
+func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
+	p.l.Println("Handle GET Product")
 
-	//POST
-	if r.Method == http.MethodPost {
-		p.addProducts(rw, r)
-		return
-	}
-
-	//PUT = update
-	if r.Method == http.MethodPut {
-		p.l.Println("Handle PUT Product")
-		//expected the id in URI
-		//https://pkg.go.dev/regexp
-		reg := regexp.MustCompile(`/([0-9]+)`)
-		// if user execute `curl localhost:9090/1 -X PUT -d ...`
-		// then g is [[/1 1]]. Each value means:
-		// - `/1`: the string matched
-		// - `1`: the information for matched string
-		g := reg.FindAllStringSubmatch(r.URL.Path, -1)
-		if len(g) != 1 {
-			p.l.Println("Invalid URI more than one id")
-			http.Error(rw, "Invalid URI", http.StatusBadGateway)
-			return
-		}
-		if len(g[0]) != 2 {
-			p.l.Println("Invalid URI more than one capture group")
-			http.Error(rw, "Invalid URI", http.StatusBadGateway)
-			return
-		}
-		idString := g[0][1]
-		id, err := strconv.Atoi(idString)
-		if err != nil {
-			p.l.Println("Invalid URI unable to convert to number", idString)
-			http.Error(rw, "Invalid URI", http.StatusBadGateway)
-			return
-		}
-
-		p.updateProducts(id, rw, r)
-		return
-	}
-
-	//catch all
-	rw.WriteHeader(http.StatusMethodNotAllowed)
-}
-
-func (p *Products) getProducts(rw http.ResponseWriter, r *http.Request) {
 	lp := data.GetProducts()
 	err := lp.ToJSON(rw)
 	if err != nil {
 		http.Error(rw, "Unable to marshal json", http.StatusInternalServerError)
 	}
+
 }
 
-func (p *Products) addProducts(rw http.ResponseWriter, r *http.Request) {
+func (p *Products) AddProducts(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle POST Product")
 
-	prod := &data.Product{}
-	err := prod.FromJSON(r.Body)
-	if err != nil {
-		http.Error(rw, "Unable to unmarshal json.", http.StatusBadRequest)
-	}
+	prod := r.Context().Value(KeyProduct{}).(data.Product)
 
-	data.AddProducts(prod)
-
+	data.AddProducts(&prod)
 }
 
-func (p *Products) updateProducts(id int, rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handle PUT Product")
-
-	prod := &data.Product{}
-	err := prod.FromJSON(r.Body)
+func (p *Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(rw, "Unable to unmarshal json.", http.StatusBadRequest)
+		http.Error(rw, "Unable to convert id", http.StatusBadRequest)
+		return
 	}
 
-	err = data.UpdateProducts(id, prod)
+	p.l.Println("Handle PUT Product", id)
+	//context.Value() gets value corresponding to key
+	prod := r.Context().Value(KeyProduct{}).(data.Product)
+
+	err = data.UpdateProducts(id, &prod)
 	if err == data.ErrProductNotFound {
 		http.Error(rw, "Product not found", http.StatusNotFound)
 		return
@@ -106,4 +60,26 @@ func (p *Products) updateProducts(id int, rw http.ResponseWriter, r *http.Reques
 		http.Error(rw, "Product not found", http.StatusInternalServerError)
 		return
 	}
+}
+
+//MiddlewarePoductValidation validates the product in the request and calls next handler if ok
+func (p Products) MiddlewareValidateProduct(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		prod := data.Product{}
+
+		err := prod.FromJSON(r.Body)
+		if err != nil {
+			p.l.Println("[ERROR] deserializing product", err)
+			http.Error(rw, "Error reading product", http.StatusBadRequest)
+			return
+		}
+
+		// add the product to the context
+		// WithValue(parent context.Context, key interface{}, val interface{})
+		ctx := context.WithValue(r.Context(), KeyProduct{}, prod)
+		r = r.WithContext(ctx)
+
+		// Call the next handler, which can be another middleware in the chain, or the final handler.
+		next.ServeHTTP(rw, r)
+	})
 }

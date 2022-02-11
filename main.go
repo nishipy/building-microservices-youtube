@@ -8,21 +8,32 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/nishipy/microservice-go-practice/handlers"
 )
 
 func main() {
 	l := log.New(os.Stdout, "product-api", log.LstdFlags)
-	// hh := handlers.NewHello(l)
-	// gh := handlers.NewGoobye(l)
 	ph := handlers.NewProducts(l)
 
-	sm := http.NewServeMux()
-	// sm.Handle("/", hh)
-	// sm.Handle("/goodbye", gh)
-	sm.Handle("/", ph)
+	//Root Router
+	sm := mux.NewRouter()
 
-	//timeout
+	//Sub-Routers
+	getRouter := sm.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/", ph.GetProducts)
+
+	//Router -> Sub-Router -> Middleware -> HandleFunc
+	putRouter := sm.Methods(http.MethodPut).Subrouter()
+	//`id`` will be added to mux.Vars(r)
+	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProducts)
+	putRouter.Use(ph.MiddlewareValidateProduct)
+
+	postRouter := sm.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/", ph.AddProducts)
+	postRouter.Use(ph.MiddlewareValidateProduct)
+
+	//create a new servertimeout with timeout
 	s := &http.Server{
 		Addr:         ":9090",
 		Handler:      sm,
