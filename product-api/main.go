@@ -12,8 +12,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/nicholasjackson/env"
-	"github.com/nishipy/building-microservices-youtube/product-api/product-api/data"
-	"github.com/nishipy/building-microservices-youtube/product-api/product-api/handlers"
+	"github.com/nishipy/building-microservices-youtube/product-api/data"
+	"github.com/nishipy/building-microservices-youtube/product-api/handlers"
 )
 
 var bindAddress = env.String("BIND_ADDRESS", false, ":9090", "Bind address for the server")

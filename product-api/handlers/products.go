@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/nishipy/building-microservices-youtube/product-api/product-api/data"
+	"github.com/nishipy/building-microservices-youtube/product-api/data"
 )
 
 // KeyProduct is a key used for the Product object in the context
