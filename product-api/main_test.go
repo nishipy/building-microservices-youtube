@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/nishipy/building-microservices-youtube/client/client"
-	"github.com/nishipy/building-microservices-youtube/client/client/products"
+	"github.com/nishipy/building-microservices-youtube/product-api/sdk/client"
+	"github.com/nishipy/building-microservices-youtube/product-api/sdk/client/products"
 )
 
 func TestOurClient(t *testing.T) {
-	//cfg := client.DefaultTransportConfig().WithHost("localhost:9090")
-	//c := client.NewHTTPClientWithConfig(nil, cfg)
-	c := client.Default
+	cfg := client.DefaultTransportConfig().WithHost("localhost:9090")
+	c := client.NewHTTPClientWithConfig(nil, cfg)
+
 	params := products.NewListProductsParams()
 
 	prod, err := c.Products.ListProducts(params)
@@ -20,5 +20,6 @@ func TestOurClient(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fmt.Println(prod)
+	fmt.Printf("%#v", prod.GetPayload()[0])
+
 }
