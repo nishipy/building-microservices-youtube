@@ -15,7 +15,7 @@ import (
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/nishipy/building-microservices-youtube/client/models"
+	"github.com/nishipy/building-microservices-youtube/product-api/sdk/models"
 )
 
 // NewUpdateProductParams creates a new UpdateProductParams object,
