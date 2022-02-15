@@ -103,6 +103,20 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/Product'
+      responses:
+        "201":
+          $ref: '#/responses/noContentResponse'
+        "404":
+          $ref: '#/responses/errorResponse'
+        "422":
+          $ref: '#/responses/errorValidation'
+      tags:
+      - products
+  /products/{id}:
+    delete:
+      description: Delete a product from database
+      operationId: deleteProduct
+      parameters:
       - description: The id of the product for which the operation relates
         format: int64
         in: path
@@ -115,26 +129,21 @@ paths:
           $ref: '#/responses/noContentResponse'
         "404":
           $ref: '#/responses/errorResponse'
-        "422":
-          $ref: '#/responses/errorValidation'
-      tags:
-      - products
-  /products/{id}:
-    delete:
-      description: Update a products details
-      operationId: deleteProduct
-      responses:
-        "201":
-          $ref: '#/responses/noContentResponse'
-        "404":
-          $ref: '#/responses/errorResponse'
         "501":
           $ref: '#/responses/errorResponse'
       tags:
       - products
     get:
       description: Return a list of products from the database
-      operationId: listSingle
+      operationId: listSingleProduct
+      parameters:
+      - description: The id of the product for which the operation relates
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+        x-go-name: ID
       responses:
         "200":
           $ref: '#/responses/productResponse'
