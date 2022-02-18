@@ -7,7 +7,7 @@ import Button from 'react-bootstrap/Button';
 import CoffeeList from './CoffeeList.js'
 import './App.css';
 
-//import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   return (
