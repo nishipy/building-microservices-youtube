@@ -6,6 +6,7 @@ class CoffeeList extends React.Component {
 
     readData() {
         const self = this;
+        //read data from backend system product-api
         axios.get(window.global.api_location+'/products').then(function(response) {
             console.log(response.data);
 
