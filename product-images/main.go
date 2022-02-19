@@ -51,7 +51,7 @@ func main() {
 	// problem with FileServer is that it is dumb
 	// ph: post handler
 	ph := sm.Methods(http.MethodPost).Subrouter()
-	ph.HandleFunc("/images/{id:[0-9]+}/{filename:[a-zA-Z]+\\.[a-z]{3}}", fh.UploadREST)
+	ph.HandleFunc("/images/{id:[0-9]+}/{filename:[a-zA-Z]+\\.[a-z]{3}}", fh.ServeHTTP)
 
 	// get files
 	// gh := get hadler

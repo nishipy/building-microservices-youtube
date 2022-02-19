@@ -31,6 +31,11 @@ func (f *Files) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// no need to check for invalid id or filename as the mux router will not send requests
 	// here unless they have the correct parameters
 
+	//check that the filepath is a valid name and file
+	if id == "" || fn == "" {
+		f.invalidURI(r.URL.String(), rw)
+		return
+	}
 	f.saveFile(id, fn, rw, r)
 }
 
