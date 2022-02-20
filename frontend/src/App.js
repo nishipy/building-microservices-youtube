@@ -35,16 +35,10 @@ function App() {
             </Form>
           </Navbar.Collapse>
         </Navbar>
-        <Admin/>
-        <CoffeeList/>
-        {/* <Routes>
-          <Route path="/">
-            <CoffeeList/>
-          </Route>
-          <Route path="/admin">
-            <Admin/>
-          </Route>
-        </Routes> */}
+        <Routes>
+          <Route path="/" element={<CoffeeList />} />
+          <Route path="admin" element={<Admin />} />
+        </Routes>
       </div>
     </BrowserRouter>
 
