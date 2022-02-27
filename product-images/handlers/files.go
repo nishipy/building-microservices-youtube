@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"io"
 	"net/http"
 	"path/filepath"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	hclog "github.com/hashicorp/go-hclog"
@@ -36,7 +38,7 @@ func (f *Files) UploadREST(rw http.ResponseWriter, r *http.Request) {
 		f.invalidURI(r.URL.String(), rw)
 		return
 	}
-	f.saveFile(id, fn, rw, r)
+	f.saveFile(id, fn, rw, r.Body)
 }
 
 // UploadMultipart implements for Multi-part request
@@ -48,7 +50,24 @@ func (f *Files) UploadMultipart(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.
+	id, idErr := strconv.Atoi(r.FormValue("id"))
+	f.log.Info("Proccess form for id", "id", id)
+	if idErr != nil {
+		f.log.Error("Bad Request", "error", err)
+		http.Error(rw, "Expected integer id", http.StatusBadRequest)
+		return
+	}
+
+	//ff: multipart file
+	//mh: multipart file header
+	ff, mh, err := r.FormFile("file")
+	if err != nil {
+		f.log.Error("Bad Request", "error", err)
+		http.Error(rw, "Expected file", http.StatusBadRequest)
+		return
+	}
+
+	f.saveFile(r.FormValue("id"), mh.Filename, rw, ff)
 }
 
 func (f *Files) invalidURI(uri string, rw http.ResponseWriter) {
@@ -57,12 +76,12 @@ func (f *Files) invalidURI(uri string, rw http.ResponseWriter) {
 }
 
 // saveFile saves the contents of the request to a file
-func (f *Files) saveFile(id, path string, rw http.ResponseWriter, r *http.Request) {
+func (f *Files) saveFile(id, path string, rw http.ResponseWriter, r io.ReadCloser) {
 	f.log.Info("Save file for product", "id", id, "path", path)
 
 	// create file path
 	fp := filepath.Join(id, path)
-	err := f.store.Save(fp, r.Body)
+	err := f.store.Save(fp, r)
 	if err != nil {
 		f.log.Error("Unable to save file", "error", err)
 		http.Error(rw, "Unable to save file", http.StatusInternalServerError)

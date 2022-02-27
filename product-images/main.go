@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"time"
 
+	gohandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/nicholasjackson/env"
@@ -14,7 +15,7 @@ import (
 	"github.com/nishipy/building-microservices-youtube/product-images/handlers"
 )
 
-var bindAddress = env.String("BIND_ADDRESS", false, ":9090", "Bind address for the server")
+var bindAddress = env.String("BIND_ADDRESS", false, ":9091", "Bind address for the server")
 var logLevel = env.String("LOG_LEVEL", false, "debug", "Log output level for the server [debug, info, trace]")
 var basePath = env.String("BASE_PATH", false, "./imagestore", "Base path to save images")
 
@@ -47,6 +48,10 @@ func main() {
 	// create a new serve mux and register the handlers
 	sm := mux.NewRouter()
 
+	// set CORS header
+	// unless we set AllowedOrigins, the request from frontend will be blocked
+	ch := gohandlers.CORS(gohandlers.AllowedOrigins([]string{"*"}))
+
 	// filename regex: {filename:[a-zA-Z]+\\.[a-z]{3}}
 	// problem with FileServer is that it is dumb
 	// ph: post handler
@@ -66,7 +71,7 @@ func main() {
 	// create a new server
 	s := http.Server{
 		Addr:         *bindAddress,      // configure the bind address
-		Handler:      sm,                // set the default handler
+		Handler:      ch(sm),            // set the default handler
 		ErrorLog:     sl,                // the logger for the server
 		ReadTimeout:  5 * time.Second,   // max time to read request from the client
 		WriteTimeout: 10 * time.Second,  // max time to write response to the client
